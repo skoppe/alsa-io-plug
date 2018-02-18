@@ -1,0 +1,7 @@
+name "alsa-io-plug"
+description "A minimal D application."
+authors "Sebastiaan Koppe"
+copyright "Copyright © 2018, Sebastiaan Koppe"
+license "proprietary"
+dependency "alsa-lib" version="~>1.0.1"
+targetType "library"
