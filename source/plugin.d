@@ -7,8 +7,8 @@ import std.string;
 
 
 extern (C) {
-  alias snd_lib_error_handler_t = __gshared void function(const char *file, int line, const char *f, int err, const char *fmt,...);
-  extern snd_lib_error_handler_t snd_lib_error;
+  alias snd_lib_error_handler_t = void function(const char *file, int line, const char *f, int err, const char *fmt,...);
+  extern __gshared snd_lib_error_handler_t snd_lib_error;
   export int _snd_pcm_test_open (snd_pcm_t **pcmp, const char *name,
                                  snd_config_t *root, snd_config_t *conf,
                                  snd_pcm_stream_t stream, int mode)  {
