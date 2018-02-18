@@ -5,6 +5,7 @@ import deimos.alsa.global;
 import core.stdc.errno;
 import core.sys.posix.poll;
 import std.string;
+import core.runtime;
 
 static enum SND_PCM_IOPLUG_VERSION_MAJOR = 1;	/**< Protocol major version */
 static enum SND_PCM_IOPLUG_VERSION_MINOR = 0;	/**< Protocol minor version */
@@ -168,6 +169,7 @@ struct snd_pcm_ioplug_callback {
   export int _snd_pcm_test_open (snd_pcm_t **pcmp, const char *name,
                                  snd_config_t *root, snd_config_t *conf,
                                  snd_pcm_stream_t stream, int mode)  {
+    rt_init();
     snd_lib_error(__FILE__.toStringz, __LINE__, __FUNCTION__.toStringz, 0, "Stuff bla stuff".toStringz);
     auto callbacks = new snd_pcm_ioplug_callback();
     callbacks.pointer = &pointer;
