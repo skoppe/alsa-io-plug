@@ -9,6 +9,7 @@ import std.string;
 import core.runtime;
 import std.socket;
 import std.conv;
+import core.stdc.stdio;
 
 static enum SND_PCM_IOPLUG_VERSION_MAJOR = 1;	/**< Protocol major version */
 static enum SND_PCM_IOPLUG_VERSION_MINOR = 0;	/**< Protocol minor version */
@@ -38,6 +39,37 @@ class PluginState {
     handle = new snd_pcm_ioplug(SND_PCM_IOPLUG_VERSION, name, SND_PCM_IOPLUG_FLAG_LISTED, sockets[0].handle, POLLIN, 0, callbacks, cast(void*)this);
   }
 }
+
+  auto toRange(snd_config_t *conf) {
+    struct Result {
+      private {
+        snd_config_t *conf;
+        snd_config_iterator_t pos, next;
+      }
+      this(snd_config_t *conf) {
+        this.conf = conf;
+        pos = snd_config_iterator_first(conf);
+        next = snd_config_iterator_next(pos);
+      }
+      @property bool empty() {
+        return pos != snd_config_iterator_end(conf);
+      }
+      auto front() {
+        return snd_config_iterator_entry(pos);
+      }
+      auto popFront() {
+        pos = next;
+        next = snd_config_iterator_next(pos);
+      }
+    }
+    return Result(conf);
+  }
+  void log(string msg, in string file = __FILE__, in size_t line = __LINE__, in string fun = __FUNCTION__) {
+    // snd_lib_error(file.toStringz, cast(int)line, fun.toStringz, 0, msg.toStringz);
+    printf(msg.toStringz);
+    // writeln(msg);
+  }
+
 extern (C) {
   alias snd_output_t = void;
   struct snd_pcm_ioplug {
@@ -108,10 +140,6 @@ struct snd_pcm_ioplug_callback {
 	int function(snd_pcm_ioplug *io, const snd_pcm_chmap_t *map) set_chmap;  // set the channel map; optional; since v1.0.2
 };
 
-
-  extern int snd_pcm_ioplug_create(snd_pcm_ioplug *io, const char *name, snd_pcm_stream_t stream, int mode);
-  alias snd_lib_error_handler_t = void function(const char *file, int line, const char *f, int err, const char *fmt,...);
-  extern __gshared snd_lib_error_handler_t snd_lib_error;
   static snd_pcm_sframes_t pointer(snd_pcm_ioplug *io) {
     log("pointer");
     return 0;
@@ -126,40 +154,13 @@ struct snd_pcm_ioplug_callback {
     return 0;
   }
 
-  auto toRange(snd_config_t *conf) {
-    struct Result {
-      private {
-        snd_config_t *conf;
-        snd_config_iterator_t pos, next;
-      }
-      this(snd_config_t *conf) {
-        this.conf = conf;
-        pos = snd_config_iterator_first(conf);
-        next = snd_config_iterator_next(pos);
-      }
-      @property bool empty() {
-        return pos != snd_config_iterator_end(conf);
-      }
-      auto front() {
-        return snd_config_iterator_entry(pos);
-      }
-      auto popFront() {
-        pos = next;
-        next = snd_config_iterator_next(pos);
-      }
-    }
-    return Result(conf);
-  }
-  void log(string msg, in string file = __FILE__, in size_t line = __LINE__, in string fun = __FUNCTION__) {
-    // snd_lib_error(file.toStringz, cast(int)line, fun.toStringz, 0, msg.toStringz);
-    writeln(msg);
-  }
+  extern int snd_pcm_ioplug_create(snd_pcm_ioplug *io, const char *name, snd_pcm_stream_t stream, int mode);
+  alias snd_lib_error_handler_t = void function(const char *file, int line, const char *f, int err, const char *fmt,...);
+  extern __gshared snd_lib_error_handler_t snd_lib_error;
+
   export int _snd_pcm_test_open (snd_pcm_t **pcmp, const char *name,
                                  snd_config_t *root, snd_config_t *conf,
                                  snd_pcm_stream_t stream, int mode)  {
-    log("ioplug: initialize runtime");
-    Runtime.initialize();
-
     if (stream != SND_PCM_STREAM_PLAYBACK)
       return -EINVAL;
     log("Were are in!");
@@ -177,4 +178,9 @@ struct snd_pcm_ioplug_callback {
     return snd_pcm_ioplug_create(plugin.handle, plugin.name, stream, mode);
   }
   export char __snd_pcm_test_open_dlsym_pcm_001;
+}
+
+shared static this() {
+  log("ioplug: initialize runtime");
+  Runtime.initialize();
 }
