@@ -161,12 +161,12 @@ struct snd_pcm_ioplug_callback {
       return -EINVAL;
     log("Were are in!");
 
-    foreach(cnf; conf.toRange) {
-      const (char)* configName;
-      if (snd_config_get_id(cnf, &configName) < 0)
-        continue;
-      writefln("ioplug: Got config %s", configName.to!string);
-    }
+    // foreach(cnf; conf.toRange) {
+    //   const (char)* configName;
+    //   if (snd_config_get_id(cnf, &configName) < 0)
+    //     continue;
+    //   writefln("ioplug: Got config %s", configName.to!string);
+    // }
 
     auto plugin = new PluginState();
 
