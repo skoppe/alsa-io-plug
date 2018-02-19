@@ -67,7 +67,7 @@ class PluginState {
   void log(string msg, in string file = __FILE__, in size_t line = __LINE__, in string fun = __FUNCTION__) {
     // snd_lib_error(file.toStringz, cast(int)line, fun.toStringz, 0, msg.toStringz);
     import std.file;
-    write("/var/log/ioplug.log", msg);
+    append("/var/log/ioplug.log", msg);
     // printf(msg.toStringz);
     // writeln(msg);
   }
