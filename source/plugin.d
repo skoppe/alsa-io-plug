@@ -179,7 +179,7 @@ struct snd_pcm_ioplug_callback {
     auto plugin = new PluginState();
     GC.addRoot(cast(void*)plugin);
 
-    return snd_pcm_ioplug_create(plugin.handle, plugin.name, stream, mode);
+    return snd_pcm_ioplug_create(plugin.handle, name, stream, mode);
   }
   export char __snd_pcm_test_open_dlsym_pcm_001;
 }
