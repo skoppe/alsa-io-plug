@@ -207,12 +207,15 @@ struct snd_pcm_ioplug_callback {
       handle = new snd_pcm_ioplug(SND_PCM_IOPLUG_VERSION, "roomio".toStringz(), SND_PCM_IOPLUG_FLAG_LISTED, sockets[0].handle, POLLIN, 0, callbacks, cast(void*)this);
     }
   }
+  void log(string msg, in string file = __FILE__, in size_t line = __LINE__, in string fun = __FUNCTION__) {
+    snd_lib_error(file.toStringz, cast(int)line, fun.toStringz, 0, msg.toStringz);
+  }
   export int _snd_pcm_test_open (snd_pcm_t **pcmp, const char *name,
                                  snd_config_t *root, snd_config_t *conf,
                                  snd_pcm_stream_t stream, int mode)  {
     if (stream != SND_PCM_STREAM_PLAYBACK)
       return -EINVAL;
-    snd_lib_error(__FILE__.toStringz, __LINE__, __FUNCTION__.toStringz, 0, "Stuff bla stuff".toStringz);
+    log("Were are in!");
 
     foreach(cnf; conf.toRange) {
       const (char)* configName;
@@ -229,7 +232,7 @@ struct snd_pcm_ioplug_callback {
 }
 
 shared static this() {
-  writeln("ioplug: initialize runtime");
+  log("ioplug: initialize runtime");
   Runtime.initialize();
 }
 
