@@ -229,6 +229,7 @@ struct snd_pcm_ioplug_callback {
 }
 
 shared static this() {
-  rt_init();
+  writeln("ioplug: initialize runtime");
+  Runtime.initialize();
 }
 
