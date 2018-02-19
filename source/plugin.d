@@ -164,6 +164,8 @@ struct snd_pcm_ioplug_callback {
   export int _snd_pcm_test_open (snd_pcm_t **pcmp, const char *name,
                                  snd_config_t *root, snd_config_t *conf,
                                  snd_pcm_stream_t stream, int mode)  {
+    rt_init();
+
     if (stream != SND_PCM_STREAM_PLAYBACK)
       return -EINVAL;
     log("Were are in!");
@@ -189,5 +191,4 @@ struct snd_pcm_ioplug_callback {
 
 shared static this() {
   log("ioplug: initialize runtime");
-  rt_init();
 }
