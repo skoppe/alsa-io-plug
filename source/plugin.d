@@ -228,4 +228,7 @@ struct snd_pcm_ioplug_callback {
   export char __snd_pcm_test_open_dlsym_pcm_001;
 }
 
+shared static this() {
+  rt_init();
+}
 
