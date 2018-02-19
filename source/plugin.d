@@ -4,6 +4,7 @@ import deimos.alsa.conf;
 import deimos.alsa.global;
 import core.stdc.errno;
 import core.sys.posix.poll;
+import core.memory;
 import std.string;
 import core.runtime;
 import std.socket;
@@ -24,6 +25,7 @@ class PluginState {
   snd_pcm_ioplug *handle;
   Socket[2] sockets;
   snd_pcm_ioplug_callback *callbacks;
+  immutable char* name;
   this() {
     callbacks = new snd_pcm_ioplug_callback();
     callbacks.pointer = &pointer;
@@ -31,8 +33,9 @@ class PluginState {
     callbacks.stop = &stop;
 
     sockets = socketPair();
+    this.name = "roomio".toStringz();
 
-    handle = new snd_pcm_ioplug(SND_PCM_IOPLUG_VERSION, "roomio".toStringz(), SND_PCM_IOPLUG_FLAG_LISTED, sockets[0].handle, POLLIN, 0, callbacks, cast(void*)this);
+    handle = new snd_pcm_ioplug(SND_PCM_IOPLUG_VERSION, name, SND_PCM_IOPLUG_FLAG_LISTED, sockets[0].handle, POLLIN, 0, callbacks, cast(void*)this);
   }
 }
 extern (C) {
@@ -169,8 +172,9 @@ struct snd_pcm_ioplug_callback {
     // }
 
     auto plugin = new PluginState();
+    GC.addRoot(cast(void*)plugin);
 
-    return snd_pcm_ioplug_create(plugin.handle, "roomio".toStringz(), stream, mode);
+    return snd_pcm_ioplug_create(plugin.handle, plugin.name, stream, mode);
   }
   export char __snd_pcm_test_open_dlsym_pcm_001;
 }
