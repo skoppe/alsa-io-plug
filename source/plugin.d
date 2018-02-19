@@ -20,6 +20,21 @@ static enum SND_PCM_STREAM_PLAYBACK = 0;
 static enum SND_PCM_IOPLUG_VERSION	= ((SND_PCM_IOPLUG_VERSION_MAJOR<<16) | (SND_PCM_IOPLUG_VERSION_MINOR<<8) | (SND_PCM_IOPLUG_VERSION_TINY));
 
 
+class PluginState {
+  snd_pcm_ioplug *handle;
+  Socket[2] sockets;
+  snd_pcm_ioplug_callback *callbacks;
+  this() {
+    callbacks = new snd_pcm_ioplug_callback();
+    callbacks.pointer = &pointer;
+    callbacks.start = &start;
+    callbacks.stop = &stop;
+
+    sockets = socketPair();
+
+    handle = new snd_pcm_ioplug(SND_PCM_IOPLUG_VERSION, "roomio".toStringz(), SND_PCM_IOPLUG_FLAG_LISTED, sockets[0].handle, POLLIN, 0, callbacks, cast(void*)this);
+  }
+}
 extern (C) {
   alias snd_output_t = void;
   struct snd_pcm_ioplug {
@@ -65,89 +80,29 @@ extern (C) {
 
 /** Callback table of ioplug */
 struct snd_pcm_ioplug_callback {
-	/**
-	 * start the PCM; required
-	 */
-	int function(snd_pcm_ioplug *io) start;
-	/**
-	 * stop the PCM; required
-	 */
-	int function(snd_pcm_ioplug *io) stop;
-	/**
-	 * get the current DMA position; required
-	 */
-	snd_pcm_sframes_t function(snd_pcm_ioplug *io) pointer;
-	/**
-	 * transfer the data; optional
-	 */
-	snd_pcm_sframes_t function(snd_pcm_ioplug *io,
-				      const snd_pcm_channel_area_t *areas,
-				      snd_pcm_uframes_t offset,
-				      snd_pcm_uframes_t size) transfer;
-  	/**
-	 * close the PCM; optional
-	 */
-	int function(snd_pcm_ioplug *io) close;
-	/**
-	 * hw_params; optional
-	 */
-	int function(snd_pcm_ioplug *io, snd_pcm_hw_params_t *params) hw_params;
-	/**
-	 * hw_free; optional
-	 */
-	int function(snd_pcm_ioplug *io) hw_free;
-	/**
-	 * sw_params; optional
-	 */
-	int function(snd_pcm_ioplug *io, snd_pcm_sw_params_t *params) sw_params;
-	/**
-	 * prepare; optional
-	 */
-	int function(snd_pcm_ioplug *io) prepare;
-	/**
-	 * drain; optional
-	 */
-	int function(snd_pcm_ioplug *io) drain;
-	/**
-	 * toggle pause; optional
-	 */
-	int function(snd_pcm_ioplug *io, int enable) pause;
-	/**
-	 * resume; optional
-	 */
-	int function(snd_pcm_ioplug *io) resume;
-	/**
-	 * poll descriptors count; optional
-	 */
-	int function(snd_pcm_ioplug *io) poll_descriptors_count;
-	/**
-	 * poll descriptors; optional
-	 */
-	int function(snd_pcm_ioplug *io, pollfd *pfd, uint space) poll_descriptors;
-	/**
-	 * mangle poll events; optional
-	 */
-	int function(snd_pcm_ioplug *io, pollfd *pfd, uint nfds, ushort *revents) poll_revents;
-	/**
-	 * dump; optional
-	 */
-	void function(snd_pcm_ioplug *io, snd_output_t * out_) dump;
-	/**
-	 * get the delay for the running PCM; optional; since v1.0.1
-	 */
-	int function(snd_pcm_ioplug *io, snd_pcm_sframes_t *delayp) delay;
-	/**
-	 * query the channel maps; optional; since v1.0.2
-	 */
-	snd_pcm_chmap_query_t **function(snd_pcm_ioplug *io) query_chmaps;
-	/**
-	 * get the channel map; optional; since v1.0.2
-	 */
-	snd_pcm_chmap_t *function(snd_pcm_ioplug *io) get_chmap;
-	/**
-	 * set the channel map; optional; since v1.0.2
-	 */
-	int function(snd_pcm_ioplug *io, const snd_pcm_chmap_t *map) set_chmap;
+	int function(snd_pcm_ioplug *io) start;  // start the PCM; required
+	int function(snd_pcm_ioplug *io) stop;  // stop the PCM; required
+	snd_pcm_sframes_t function(snd_pcm_ioplug *io) pointer;  // get the current DMA position; required
+	snd_pcm_sframes_t function(snd_pcm_ioplug *io,  // transfer the data; optional
+			      const snd_pcm_channel_area_t *areas,
+			      snd_pcm_uframes_t offset,
+			      snd_pcm_uframes_t size) transfer;
+		int function(snd_pcm_ioplug *io) close;  // close the PCM; optional
+	int function(snd_pcm_ioplug *io, snd_pcm_hw_params_t *params) hw_params;  // hw_params; optional
+	int function(snd_pcm_ioplug *io) hw_free;  // hw_free; optional
+	int function(snd_pcm_ioplug *io, snd_pcm_sw_params_t *params) sw_params;  // sw_params; optional
+	int function(snd_pcm_ioplug *io) prepare;  // prepare; optional
+	int function(snd_pcm_ioplug *io) drain;  // drain; optional
+	int function(snd_pcm_ioplug *io, int enable) pause;  // toggle pause; optional
+	int function(snd_pcm_ioplug *io) resume;  // resume; optional
+	int function(snd_pcm_ioplug *io) poll_descriptors_count;  // poll descriptors count; optional
+	int function(snd_pcm_ioplug *io, pollfd *pfd, uint space) poll_descriptors;  // poll descriptors; optional
+	int function(snd_pcm_ioplug *io, pollfd *pfd, uint nfds, ushort *revents) poll_revents;  // mangle poll events; optional
+	void function(snd_pcm_ioplug *io, snd_output_t * out_) dump;  // dump; optional
+	int function(snd_pcm_ioplug *io, snd_pcm_sframes_t *delayp) delay;  // get the delay for the running PCM; optional; since v1.0.1
+	snd_pcm_chmap_query_t **function(snd_pcm_ioplug *io) query_chmaps;  // query the channel maps; optional; since v1.0.2
+	snd_pcm_chmap_t *function(snd_pcm_ioplug *io) get_chmap;  // get the channel map; optional; since v1.0.2
+	int function(snd_pcm_ioplug *io, const snd_pcm_chmap_t *map) set_chmap;  // set the channel map; optional; since v1.0.2
 };
 
 
@@ -155,16 +110,16 @@ struct snd_pcm_ioplug_callback {
   alias snd_lib_error_handler_t = void function(const char *file, int line, const char *f, int err, const char *fmt,...);
   extern __gshared snd_lib_error_handler_t snd_lib_error;
   static snd_pcm_sframes_t pointer(snd_pcm_ioplug *io) {
-    snd_lib_error(__FILE__.toStringz, __LINE__, __FUNCTION__.toStringz, 0, "pointer".toStringz);
+    log("pointer");
     return 0;
   }
   static int start(snd_pcm_ioplug *io) {
-    snd_lib_error(__FILE__.toStringz, __LINE__, __FUNCTION__.toStringz, 0, "start".toStringz);
+    log("start");
     return 0;
   }
 
   static int stop(snd_pcm_ioplug *io) {
-    snd_lib_error(__FILE__.toStringz, __LINE__, __FUNCTION__.toStringz, 0, "stop".toStringz);
+    log("stop");
     return 0;
   }
 
@@ -192,23 +147,9 @@ struct snd_pcm_ioplug_callback {
     }
     return Result(conf);
   }
-  class PluginState {
-    snd_pcm_ioplug *handle;
-    Socket[2] sockets;
-    snd_pcm_ioplug_callback *callbacks;
-    this() {
-      callbacks = new snd_pcm_ioplug_callback();
-      callbacks.pointer = &pointer;
-      callbacks.start = &start;
-      callbacks.stop = &stop;
-
-      sockets = socketPair();
-
-      handle = new snd_pcm_ioplug(SND_PCM_IOPLUG_VERSION, "roomio".toStringz(), SND_PCM_IOPLUG_FLAG_LISTED, sockets[0].handle, POLLIN, 0, callbacks, cast(void*)this);
-    }
-  }
   void log(string msg, in string file = __FILE__, in size_t line = __LINE__, in string fun = __FUNCTION__) {
-    snd_lib_error(file.toStringz, cast(int)line, fun.toStringz, 0, msg.toStringz);
+    // snd_lib_error(file.toStringz, cast(int)line, fun.toStringz, 0, msg.toStringz);
+    writeln(msg);
   }
   export int _snd_pcm_test_open (snd_pcm_t **pcmp, const char *name,
                                  snd_config_t *root, snd_config_t *conf,
