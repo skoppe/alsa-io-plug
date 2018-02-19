@@ -175,8 +175,7 @@ struct snd_pcm_ioplug_callback {
     callbacks.pointer = &pointer;
     callbacks.start = &start;
     callbacks.stop = &stop;
-    auto plugin = new snd_pcm_ioplug();
-    new snd_pcm_ioplug(SND_PCM_IOPLUG_VERSION, "roomio".toStringz(), SND_PCM_IOPLUG_FLAG_LISTED, 0, 0, 0, callbacks);
+    auto plugin = new snd_pcm_ioplug(SND_PCM_IOPLUG_VERSION, "roomio".toStringz(), SND_PCM_IOPLUG_FLAG_LISTED, 0, 0, 0, callbacks);
     auto result = snd_pcm_ioplug_create(plugin, "roomio".toStringz(), cast(snd_pcm_stream_t)SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
     if (result == 0)
       return 0;
