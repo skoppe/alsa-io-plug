@@ -6,6 +6,8 @@ import core.stdc.errno;
 import core.sys.posix.poll;
 import std.string;
 import core.runtime;
+import std.socket;
+import std.conv;
 
 static enum SND_PCM_IOPLUG_VERSION_MAJOR = 1;	/**< Protocol major version */
 static enum SND_PCM_IOPLUG_VERSION_MINOR = 0;	/**< Protocol minor version */
@@ -166,20 +168,62 @@ struct snd_pcm_ioplug_callback {
     return 0;
   }
 
+  auto toRange(snd_config_t *conf) {
+    struct Result {
+      private {
+        snd_config_t *conf;
+        snd_config_iterator_t pos, next;
+      }
+      this(snd_config_t *conf) {
+        this.conf = conf;
+        pos = snd_config_iterator_first(conf);
+        next = snd_config_iterator_next(pos);
+      }
+      @property bool empty() {
+        return pos != snd_config_iterator_end(conf);
+      }
+      auto front() {
+        return snd_config_iterator_entry(pos);
+      }
+      auto popFront() {
+        pos = next;
+        next = snd_config_iterator_next(pos);
+      }
+    }
+    return Result(conf);
+  }
+  class PluginState {
+    snd_pcm_ioplug *handle;
+    Socket[2] sockets;
+    snd_pcm_ioplug_callback *callbacks;
+    this() {
+      callbacks = new snd_pcm_ioplug_callback();
+      callbacks.pointer = &pointer;
+      callbacks.start = &start;
+      callbacks.stop = &stop;
+
+      sockets = socketPair();
+
+      handle = new snd_pcm_ioplug(SND_PCM_IOPLUG_VERSION, "roomio".toStringz(), SND_PCM_IOPLUG_FLAG_LISTED, sockets[0].handle, POLLIN, 0, callbacks, cast(void*)this);
+    }
+  }
   export int _snd_pcm_test_open (snd_pcm_t **pcmp, const char *name,
                                  snd_config_t *root, snd_config_t *conf,
                                  snd_pcm_stream_t stream, int mode)  {
-    rt_init();
+    if (stream != SND_PCM_STREAM_PLAYBACK)
+      return -EINVAL;
     snd_lib_error(__FILE__.toStringz, __LINE__, __FUNCTION__.toStringz, 0, "Stuff bla stuff".toStringz);
-    auto callbacks = new snd_pcm_ioplug_callback();
-    callbacks.pointer = &pointer;
-    callbacks.start = &start;
-    callbacks.stop = &stop;
-    auto plugin = new snd_pcm_ioplug(SND_PCM_IOPLUG_VERSION, "roomio".toStringz(), SND_PCM_IOPLUG_FLAG_LISTED, 0, 0, 0, callbacks);
-    auto result = snd_pcm_ioplug_create(plugin, "roomio".toStringz(), cast(snd_pcm_stream_t)SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
-    if (result == 0)
-      return 0;
-    return -EINVAL;
+
+    foreach(cnf; conf.toRange) {
+      const (char)* configName;
+      if (snd_config_get_id(cnf, &configName) < 0)
+        continue;
+      writefln("ioplug: Got config %s", configName.to!string);
+    }
+
+    auto plugin = new PluginState();
+
+    return snd_pcm_ioplug_create(plugin.handle, "roomio".toStringz(), stream, mode);
   }
   export char __snd_pcm_test_open_dlsym_pcm_001;
 }
