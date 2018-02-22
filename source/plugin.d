@@ -147,7 +147,7 @@ struct snd_pcm_ioplug_callback {
 
   static snd_pcm_sframes_t pointer(snd_pcm_ioplug *io) {
     log("pointer");
-    return 0;
+    return position;
   }
   static int start(snd_pcm_ioplug *io) {
     log("start");
@@ -159,11 +159,14 @@ struct snd_pcm_ioplug_callback {
     return 0;
   }
 
+  static long position = 0;
   static snd_pcm_sframes_t transfer(snd_pcm_ioplug *io,  // transfer the data; optional
 			      const snd_pcm_channel_area_t *areas,
 			      snd_pcm_uframes_t offset,
 			      snd_pcm_uframes_t size)
   {
+    position += size;
+    log("transfer");
     return size;
   }
 
