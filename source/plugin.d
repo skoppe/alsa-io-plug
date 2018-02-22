@@ -32,11 +32,13 @@ class PluginState {
     callbacks.pointer = &pointer;
     callbacks.start = &start;
     callbacks.stop = &stop;
+    callbacks.transfer = &transfer;
 
     sockets = socketPair();
     this.name = "roomio".toStringz();
 
-    handle = new snd_pcm_ioplug(SND_PCM_IOPLUG_VERSION, name, SND_PCM_IOPLUG_FLAG_LISTED, sockets[0].handle, POLLIN, 0, callbacks, cast(void*)this);
+    // handle = new snd_pcm_ioplug(SND_PCM_IOPLUG_VERSION, name, SND_PCM_IOPLUG_FLAG_LISTED, sockets[0].handle, POLLIN, 0, callbacks, cast(void*)this);
+    handle = new snd_pcm_ioplug(SND_PCM_IOPLUG_VERSION, name, SND_PCM_IOPLUG_FLAG_LISTED, -1, -1, 0, callbacks, cast(void*)this);
   }
 }
 
@@ -155,6 +157,14 @@ struct snd_pcm_ioplug_callback {
   static int stop(snd_pcm_ioplug *io) {
     log("stop");
     return 0;
+  }
+
+  static snd_pcm_sframes_t transfer(snd_pcm_ioplug *io,  // transfer the data; optional
+			      const snd_pcm_channel_area_t *areas,
+			      snd_pcm_uframes_t offset,
+			      snd_pcm_uframes_t size)
+  {
+    return size;
   }
 
   extern int snd_pcm_ioplug_create(snd_pcm_ioplug *io, const char *name, snd_pcm_stream_t stream, int mode);
