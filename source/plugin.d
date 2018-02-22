@@ -193,6 +193,7 @@ struct snd_pcm_ioplug_callback {
     log("Added GC root");
 
     auto r = snd_pcm_ioplug_create(plugin.handle, name, stream, mode);
+    (*pcmp) = plugin.handle.pcm;
     log(format("create ioplug: %s", r));
     return r;
   }
